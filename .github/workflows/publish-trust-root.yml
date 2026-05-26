@@ -89,7 +89,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          # Pull just enough history to push back to main.
           fetch-depth: 1
 
       - name: install cosign
@@ -97,48 +96,43 @@ jobs:
         with:
           cosign-release: 'v2.4.0'
 
-      - name: install jq (preinstalled on ubuntu-latest, here for clarity)
+      - name: jq sanity
         run: jq --version
 
       - name: recompute sha256s in trust-root index
-        id: recompute
         run: |
           set -euo pipefail
           index="${WELL_KNOWN_DIR}/atlasent-trust-root.json"
-          tmp="$(mktemp)"
-          cp "${index}" "${tmp}"
+          work="$(mktemp)"
+          cp "${index}" "${work}"
 
-          # For every resource entry, compute the live sha256 and patch
-          # the entry in place. Resources whose path doesn't resolve to a
-          # file under the repo root are a hard error.
-          resources=$(jq -c '.resources[]' "${index}")
-          updated="${tmp}"
-          while IFS= read -r entry; do
-            path=$(echo "${entry}" | jq -r '.path')
-            # paths in the index are absolute on the served host, e.g.
-            # /.well-known/foo.json; strip the leading slash to map to repo.
+          # For each resource: compute live sha256, patch in place.
+          # Iterate over a stable snapshot of paths (taken from the
+          # original index) so we don't re-read the file we're editing.
+          paths_snapshot=$(jq -r '.resources[].path' "${index}")
+          while IFS= read -r path; do
+            [ -z "${path}" ] && continue
             local_path="${path#/}"
             if [ ! -f "${local_path}" ]; then
               echo "ERROR: resource ${path} (expected at ${local_path}) does not exist" >&2
               exit 1
             fi
             real_sha=$(sha256sum "${local_path}" | awk '{print $1}')
-            updated=$(jq --arg p "${path}" --arg s "${real_sha}" \
-              '(.resources[] | select(.path == $p) | .sha256) = $s' "${updated}" \
-              | tee "${tmp}.next" >/dev/null && cat "${tmp}.next")
-            echo "${updated}" > "${tmp}"
-          done <<< "${resources}"
+            next="$(mktemp)"
+            jq --arg p "${path}" --arg s "${real_sha}" \
+              '(.resources[] | select(.path == $p) | .sha256) = $s' \
+              "${work}" > "${next}"
+            mv "${next}" "${work}"
+            echo "  ${path} -> ${real_sha}"
+          done <<< "${paths_snapshot}"
 
-          # Pretty-print and write back if changed.
-          jq '.' "${tmp}" > "${index}.new"
-          if ! cmp -s "${index}" "${index}.new"; then
-            mv "${index}.new" "${index}"
-            echo "changed=true" >> "${GITHUB_OUTPUT}"
-            echo "trust-root index updated with recomputed sha256s"
-          else
+          jq '.' "${work}" > "${index}.new"
+          if cmp -s "${index}" "${index}.new"; then
             rm "${index}.new"
-            echo "changed=false" >> "${GITHUB_OUTPUT}"
-            echo "trust-root index sha256s already match"
+            echo "trust-root index sha256s already match; no change"
+          else
+            mv "${index}.new" "${index}"
+            echo "trust-root index updated with recomputed sha256s"
           fi
 
       - name: sign each .well-known file (cosign keyless)
@@ -152,7 +146,7 @@ jobs:
             bundle="${f}.bundle"
             echo "==> signing ${f}"
             # Output detached signature and the Rekor bundle for offline
-            # verification (cosign verify --offline --bundle ...).
+            # verification (cosign verify-blob --offline --bundle ...).
             cosign sign-blob \
               --yes \
               --output-signature "${sig}" \
