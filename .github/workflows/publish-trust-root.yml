@@ -1,0 +1,175 @@
+name: publish-trust-root
+
+# Trust-root publishing workflow.
+#
+# On push to main:
+#   1. Validate each .well-known/*.json against its JSON Schema
+#      (pulled from atlasent-systems-inc/atlasent main).
+#   2. Recompute sha256 of each non-index .well-known file and
+#      patch trust-root.json's resources[].sha256 in place.
+#   3. Cosign sign each .well-known/*.json keyless via Sigstore.
+#   4. Commit the (possibly updated) trust-root.json and the new
+#      *.sig files back to main with [skip ci] to prevent loops.
+#
+# On pull request:
+#   Validate only. No signing, no commit-back.
+#
+# Identity: this workflow's OIDC subject is the Sigstore identity
+# pinned by verifiers as R1_release_trust_root in
+# atlasent-sigstore-identities.json.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.well-known/**'
+      - '.github/workflows/publish-trust-root.yml'
+  pull_request:
+    paths:
+      - '.well-known/**'
+      - '.github/workflows/publish-trust-root.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write       # needed to commit .sig files back on push
+  id-token: write       # needed for Sigstore keyless OIDC
+
+concurrency:
+  group: publish-trust-root
+  cancel-in-progress: false
+
+env:
+  ATLASENT_REF: main
+  SCHEMA_DIR: schemas/trust-root/v1
+  WELL_KNOWN_DIR: .well-known
+
+jobs:
+  validate:
+    name: validate against schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install check-jsonschema
+        run: pipx install check-jsonschema
+
+      - name: fetch schemas from atlasent
+        run: |
+          set -euo pipefail
+          mkdir -p .schemas
+          for f in atlasent-trust-root atlasent-verifier-keys atlasent-revocations atlasent-sigstore-identities; do
+            curl -sfL \
+              "https://raw.githubusercontent.com/AtlaSent-Systems-Inc/atlasent/${ATLASENT_REF}/${SCHEMA_DIR}/${f}.schema.json" \
+              -o ".schemas/${f}.schema.json"
+          done
+          ls -la .schemas/
+
+      - name: validate each .well-known file
+        run: |
+          set -euo pipefail
+          pairs=(
+            "atlasent-trust-root"
+            "atlasent-verifier-keys"
+            "atlasent-revocations"
+            "atlasent-sigstore-identities"
+          )
+          for name in "${pairs[@]}"; do
+            f="${WELL_KNOWN_DIR}/${name}.json"
+            s=".schemas/${name}.schema.json"
+            echo "==> validating ${f} against ${s}"
+            check-jsonschema --schemafile "${s}" "${f}"
+          done
+
+  sign-and-publish:
+    name: sign and publish signatures
+    needs: validate
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Pull just enough history to push back to main.
+          fetch-depth: 1
+
+      - name: install cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.4.0'
+
+      - name: install jq (preinstalled on ubuntu-latest, here for clarity)
+        run: jq --version
+
+      - name: recompute sha256s in trust-root index
+        id: recompute
+        run: |
+          set -euo pipefail
+          index="${WELL_KNOWN_DIR}/atlasent-trust-root.json"
+          tmp="$(mktemp)"
+          cp "${index}" "${tmp}"
+
+          # For every resource entry, compute the live sha256 and patch
+          # the entry in place. Resources whose path doesn't resolve to a
+          # file under the repo root are a hard error.
+          resources=$(jq -c '.resources[]' "${index}")
+          updated="${tmp}"
+          while IFS= read -r entry; do
+            path=$(echo "${entry}" | jq -r '.path')
+            # paths in the index are absolute on the served host, e.g.
+            # /.well-known/foo.json; strip the leading slash to map to repo.
+            local_path="${path#/}"
+            if [ ! -f "${local_path}" ]; then
+              echo "ERROR: resource ${path} (expected at ${local_path}) does not exist" >&2
+              exit 1
+            fi
+            real_sha=$(sha256sum "${local_path}" | awk '{print $1}')
+            updated=$(jq --arg p "${path}" --arg s "${real_sha}" \
+              '(.resources[] | select(.path == $p) | .sha256) = $s' "${updated}" \
+              | tee "${tmp}.next" >/dev/null && cat "${tmp}.next")
+            echo "${updated}" > "${tmp}"
+          done <<< "${resources}"
+
+          # Pretty-print and write back if changed.
+          jq '.' "${tmp}" > "${index}.new"
+          if ! cmp -s "${index}" "${index}.new"; then
+            mv "${index}.new" "${index}"
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+            echo "trust-root index updated with recomputed sha256s"
+          else
+            rm "${index}.new"
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            echo "trust-root index sha256s already match"
+          fi
+
+      - name: sign each .well-known file (cosign keyless)
+        env:
+          COSIGN_EXPERIMENTAL: '1'
+          COSIGN_YES: 'true'
+        run: |
+          set -euo pipefail
+          for f in "${WELL_KNOWN_DIR}"/*.json; do
+            sig="${f}.sig"
+            bundle="${f}.bundle"
+            echo "==> signing ${f}"
+            # Output detached signature and the Rekor bundle for offline
+            # verification (cosign verify --offline --bundle ...).
+            cosign sign-blob \
+              --yes \
+              --output-signature "${sig}" \
+              --bundle "${bundle}" \
+              "${f}"
+          done
+          ls -la "${WELL_KNOWN_DIR}"
+
+      - name: commit updates back to main
+        run: |
+          set -euo pipefail
+          git config user.name 'atlasent-trust-root-bot'
+          git config user.email 'trust-root-bot@users.noreply.github.com'
+          git add "${WELL_KNOWN_DIR}/"*.json "${WELL_KNOWN_DIR}/"*.sig "${WELL_KNOWN_DIR}/"*.bundle
+          if git diff --staged --quiet; then
+            echo "no changes to commit"
+            exit 0
+          fi
+          git commit -m "chore(trust-root): refresh signatures and index hashes [skip ci]"
+          git push
