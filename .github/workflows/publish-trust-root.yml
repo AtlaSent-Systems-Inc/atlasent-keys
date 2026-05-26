@@ -7,12 +7,15 @@ name: publish-trust-root
 #      (pulled from atlasent-systems-inc/atlasent main).
 #   2. Recompute sha256 of each non-index .well-known file and
 #      patch trust-root.json's resources[].sha256 in place.
-#   3. Cosign sign each .well-known/*.json keyless via Sigstore.
+#   3. Cosign sign each .well-known/*.json keyless via Sigstore (R4 keyless).
 #   4. Commit the (possibly updated) trust-root.json and the new
-#      *.sig files back to main with [skip ci] to prevent loops.
+#      *.bundle files back to main with [skip ci] to prevent loops.
 #
 # On pull request:
 #   Validate only. No signing, no commit-back.
+#
+# R4 signing: uses cosign keyless (OIDC via GitHub Actions / Sigstore Fulcio).
+# No long-lived signing secret is required.
 #
 # Identity: this workflow's OIDC subject is the Sigstore identity
 # pinned by verifiers as R1_release_trust_root in
@@ -31,8 +34,8 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: write       # needed to commit .sig files back on push
-  id-token: write       # needed for Sigstore keyless OIDC
+  contents: write       # needed to commit bundle files back on push
+  id-token: write       # needed for Sigstore keyless OIDC (R4)
 
 concurrency:
   group: publish-trust-root
@@ -92,10 +95,11 @@ jobs:
           # Pull just enough history to push back to main.
           fetch-depth: 1
 
-      - name: install cosign
+      - name: Install cosign
+        # R4 keyless: OIDC short-lived cert via Sigstore Fulcio. No private key.
         uses: sigstore/cosign-installer@v3
         with:
-          cosign-release: 'v2.4.0'
+          cosign-release: 'v2.4.1'
 
       - name: install jq (preinstalled on ubuntu-latest, here for clarity)
         run: jq --version
@@ -142,20 +146,18 @@ jobs:
           fi
 
       - name: sign each .well-known file (cosign keyless)
+        # R4 keyless: --bundle only (Sigstore bundle v0.3 contains the cert,
+        # Rekor entry, and detached signature — no separate .sig file needed).
+        # COSIGN_YES=true suppresses the interactive confirmation prompt.
         env:
-          COSIGN_EXPERIMENTAL: '1'
           COSIGN_YES: 'true'
         run: |
           set -euo pipefail
           for f in "${WELL_KNOWN_DIR}"/*.json; do
-            sig="${f}.sig"
             bundle="${f}.bundle"
             echo "==> signing ${f}"
-            # Output detached signature and the Rekor bundle for offline
-            # verification (cosign verify --offline --bundle ...).
             cosign sign-blob \
               --yes \
-              --output-signature "${sig}" \
               --bundle "${bundle}" \
               "${f}"
           done
@@ -166,7 +168,7 @@ jobs:
           set -euo pipefail
           git config user.name 'atlasent-trust-root-bot'
           git config user.email 'trust-root-bot@users.noreply.github.com'
-          git add "${WELL_KNOWN_DIR}/"*.json "${WELL_KNOWN_DIR}/"*.sig "${WELL_KNOWN_DIR}/"*.bundle
+          git add "${WELL_KNOWN_DIR}/"*.json "${WELL_KNOWN_DIR}/"*.bundle
           if git diff --staged --quiet; then
             echo "no changes to commit"
             exit 0
