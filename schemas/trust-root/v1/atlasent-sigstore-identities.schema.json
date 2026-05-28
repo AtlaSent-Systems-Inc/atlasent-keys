@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keys.atlasent.io/schemas/trust-root/v1/atlasent-sigstore-identities.schema.json",
+  "title": "AtlaSent Sigstore identity allowlist",
+  "description": "Accepted OIDC subject regexps for cosign-keyless-signed artifacts, per role. Verifiers pass the relevant regexp to cosign verify-blob's --certificate-identity-regexp; this decouples SDK builds from workflow-path changes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "issued_at", "identities"],
+  "properties": {
+    "schema": {
+      "const": "atlasent-sigstore-identities/v1"
+    },
+    "issued_at": {
+      "description": "RFC 3339 timestamp at which this allowlist was published.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "identities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/identity" }
+    }
+  },
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "identity_regexp", "oidc_issuer", "valid_from", "valid_until"],
+      "properties": {
+        "role": {
+          "description": "Signing role this identity is permitted for. R1 is split by artifact class (engine, console, openapi, trust-root); R4 covers the policy-pack publishing workflow after the Phase 4 cosign migration.",
+          "type": "string",
+          "enum": [
+            "R1_release_engine",
+            "R1_release_console",
+            "R1_release_openapi",
+            "R1_release_trust_root",
+            "R4_pack"
+          ]
+        },
+        "identity_regexp": {
+          "description": "Regular expression matched against the Sigstore cert's OIDC subject. Operators MUST anchor with ^ and $ to prevent prefix/suffix smuggling.",
+          "type": "string",
+          "minLength": 1
+        },
+        "oidc_issuer": {
+          "description": "OIDC issuer URL (typically https://token.actions.githubusercontent.com).",
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        },
+        "valid_from": {
+          "description": "RFC 3339 timestamp at which this identity becomes acceptable.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_until": {
+          "description": "RFC 3339 timestamp after which this identity is no longer accepted. Null means open-ended (current).",
+          "type": ["string", "null"],
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

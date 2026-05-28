@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keys.atlasent.io/schemas/trust-root/v1/atlasent-revocations.schema.json",
+  "title": "AtlaSent revocation list",
+  "description": "Flat list of revoked KIDs (R2/R3/R4) and revoked Sigstore identities (R1). Per ADR-005 D2, SDK consumers refresh on a 4-hour default cadence (5 minute floor). Verifiers MUST reject any artifact whose signing material appears here, regardless of validity windows.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "issued_at", "revoked_keys", "revoked_identities"],
+  "properties": {
+    "schema": {
+      "const": "atlasent-revocations/v1"
+    },
+    "issued_at": {
+      "description": "RFC 3339 timestamp at which this revocation list was published.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "revoked_keys": {
+      "description": "KIDs whose private material is treated as compromised. Each entry MUST match a kid in atlasent-verifier-keys.json (operator-visible cross-reference).",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/revoked_key" }
+    },
+    "revoked_identities": {
+      "description": "Sigstore identities that may no longer sign artifacts under their named role. Each entry MUST match an identity_regexp in atlasent-sigstore-identities.json.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/revoked_identity" }
+    }
+  },
+  "$defs": {
+    "revoked_key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kid", "role", "revoked_at", "reason"],
+      "properties": {
+        "kid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "role": {
+          "type": "string",
+          "enum": ["R1_release", "R2_permit", "R3_audit", "R4_pack"]
+        },
+        "revoked_at": {
+          "description": "RFC 3339 timestamp at which the revocation was published.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "reason": {
+          "description": "Short human-readable reason. Free text; operator-facing.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    },
+    "revoked_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity_regexp", "oidc_issuer", "role", "revoked_at", "reason"],
+      "properties": {
+        "identity_regexp": {
+          "type": "string",
+          "minLength": 1
+        },
+        "oidc_issuer": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["R1_release", "R4_pack"]
+        },
+        "revoked_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keys.atlasent.io/schemas/trust-root/v1/atlasent-verifier-keys.schema.json",
+  "title": "AtlaSent verifier keys (JWKS-shaped)",
+  "description": "JWKS-compatible document carrying the public halves of R1–R4 signing keys with role, validity windows, optional tenant scope, and rotation/revocation flags. ADR-005 D1 keeps this a single global file in V1, with the `tenant` field reserved for V2 per-tenant trust-roots. ADR-005 D4 makes `role` required and enum-bound so R2 (permit) and R3 (audit) keys are independently revocable.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "issued_at", "keys"],
+  "properties": {
+    "schema": {
+      "const": "atlasent-verifier-keys/v1"
+    },
+    "issued_at": {
+      "description": "RFC 3339 timestamp at which this document was published.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "keys": {
+      "description": "All keys ever issued (active, retired, revoked). Historical bundles need retired keys for verification; readers filter by valid_from/valid_until/revoked at verify time.",
+      "type": "array",
+      "minItems": 0,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/key" }
+    }
+  },
+  "$defs": {
+    "key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kid",
+        "role",
+        "kty",
+        "crv",
+        "alg",
+        "x",
+        "valid_from",
+        "valid_until",
+        "replaced_by",
+        "revoked"
+      ],
+      "properties": {
+        "kid": {
+          "description": "Canonical KID. Format: ak_<yyyy>_<qN>_<tenant-shortcode>_<role-shortcode> (e.g. ak_2026_q3_acme_permit). Legacy UUID KIDs remain valid for keys provisioned before this schema.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "role": {
+          "description": "Signing role this key is bound to. Per ADR-005 D4, R2 and R3 are distinct per tenant; the role field gates verifier acceptance.",
+          "type": "string",
+          "enum": ["R1_release", "R2_permit", "R3_audit", "R4_pack"]
+        },
+        "tenant": {
+          "description": "Optional tenant scope. Null/absent in V1 means a global key; populated for R2/R3 per-tenant keys. Reserved for V2 per-tenant trust-roots per ADR-005 D1.",
+          "type": ["string", "null"]
+        },
+        "kty": {
+          "description": "JWK key type. V1 uses Ed25519 (OKP) for R2/R3/R4 and ECDSA P-256 (EC) for R1 cosign material; reserved EC entry is permitted.",
+          "type": "string",
+          "enum": ["OKP", "EC"]
+        },
+        "crv": {
+          "description": "JWK curve. Ed25519 for OKP keys; P-256 for EC keys.",
+          "type": "string",
+          "enum": ["Ed25519", "P-256"]
+        },
+        "alg": {
+          "description": "JWA signing algorithm identifier. EdDSA for Ed25519; ES256 for P-256.",
+          "type": "string",
+          "enum": ["EdDSA", "ES256"]
+        },
+        "x": {
+          "description": "Base64url-encoded public key material. For Ed25519: 32-byte public key. For P-256: x-coordinate.",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "minLength": 32
+        },
+        "y": {
+          "description": "Base64url-encoded y-coordinate. Required when kty=EC; MUST be absent when kty=OKP.",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "valid_from": {
+          "description": "RFC 3339 timestamp at which this key becomes valid. Verifiers reject signatures issued before this.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_until": {
+          "description": "RFC 3339 timestamp after which this key is no longer issuing. Verifiers accept signatures whose issuance time falls within [valid_from, valid_until]; this lets historical bundles verify after rotation.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "replaced_by": {
+          "description": "KID that supersedes this one after rotation. Null when this key is current.",
+          "type": ["string", "null"]
+        },
+        "revoked": {
+          "description": "True if this KID is on the revocation list. Verifiers MUST cross-check atlasent-revocations.json; this flag is a denormalised convenience for operators reading the JWKS directly.",
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kty": { "const": "OKP" } } },
+          "then": {
+            "properties": {
+              "crv": { "const": "Ed25519" },
+              "alg": { "const": "EdDSA" }
+            },
+            "not": { "required": ["y"] }
+          }
+        },
+        {
+          "if": { "properties": { "kty": { "const": "EC" } } },
+          "then": {
+            "properties": {
+              "crv": { "const": "P-256" },
+              "alg": { "const": "ES256" }
+            },
+            "required": ["y"]
+          }
+        }
+      ]
+    }
+  }
+}
