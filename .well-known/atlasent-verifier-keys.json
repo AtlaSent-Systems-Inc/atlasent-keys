@@ -1,5 +1,58 @@
 {
   "schema": "atlasent-verifier-keys/v1",
-  "issued_at": "2026-05-26T00:00:00Z",
-  "keys": []
+  "issued_at": "2026-05-28T00:00:00Z",
+  "keys": [
+    {
+      "kid": "v2-audit-2026",
+      "role": "R3_audit",
+      "kty": "OKP",
+      "crv": "Ed25519",
+      "alg": "EdDSA",
+      "x": "IctfKl2VEOaRBX9jvoYnUc2cInF81WgywU5iY3_Ui44",
+      "valid_from": "2026-05-28T00:00:00Z",
+      "valid_until": "2027-06-01T00:00:00Z",
+      "replaced_by": null,
+      "revoked": false,
+      "tenant": null
+    },
+    {
+      "kid": "test-key",
+      "role": "R3_audit",
+      "kty": "OKP",
+      "crv": "Ed25519",
+      "alg": "EdDSA",
+      "x": "uCfAGR92U9gKXqMmGs4MCoaTq-LmzoRe_aiwZE6UcnQ",
+      "valid_from": "2026-01-01T00:00:00Z",
+      "valid_until": "2027-01-01T00:00:00Z",
+      "replaced_by": "v2-audit-2026",
+      "revoked": false,
+      "tenant": null
+    },
+    {
+      "kid": "permit-kid",
+      "role": "R2_permit",
+      "kty": "OKP",
+      "crv": "Ed25519",
+      "alg": "EdDSA",
+      "x": "uCfAGR92U9gKXqMmGs4MCoaTq-LmzoRe_aiwZE6UcnQ",
+      "valid_from": "2026-01-01T00:00:00Z",
+      "valid_until": "2027-01-01T00:00:00Z",
+      "replaced_by": null,
+      "revoked": false,
+      "tenant": null
+    },
+    {
+      "kid": "revoked-kid",
+      "role": "R3_audit",
+      "kty": "OKP",
+      "crv": "Ed25519",
+      "alg": "EdDSA",
+      "x": "uCfAGR92U9gKXqMmGs4MCoaTq-LmzoRe_aiwZE6UcnQ",
+      "valid_from": "2026-01-01T00:00:00Z",
+      "valid_until": "2027-01-01T00:00:00Z",
+      "replaced_by": null,
+      "revoked": true,
+      "tenant": null
+    }
+  ]
 }
