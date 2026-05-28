@@ -1,6 +1,13 @@
 {
   "schema": "atlasent-revocations/v1",
-  "issued_at": "2026-05-26T00:00:00Z",
-  "revoked_keys": [],
+  "issued_at": "2026-05-28T00:00:00Z",
+  "revoked_keys": [
+    {
+      "kid": "revoked-kid",
+      "role": "R3_audit",
+      "revoked_at": "2026-05-28T00:00:00Z",
+      "reason": "Test key; superseded by v2-audit-2026"
+    }
+  ],
   "revoked_identities": []
 }
