@@ -74,7 +74,7 @@ Public keys are served at the JWKS endpoint:
 GET https://keys.atlasent.io/.well-known/permit-signing-keys.json
 ```
 
-Or pinned directly from this repository at `.well-known/permit-signing-keys.json`.
+Or pinned directly from this repository at `docs/permit-signing-keys.json`.
 
 Select the key whose `kid` matches `signature.kid`.
 
@@ -124,7 +124,7 @@ Keys are rotated on a 90-day schedule. The JWKS endpoint always carries the **cu
 
 Rotation events:
 1. New key pair generated offline in HSM.
-2. New public key appended to `.well-known/permit-signing-keys.json` with a new `kid` and `nbf` (not-before timestamp).
+2. New public key appended to `docs/permit-signing-keys.json` with a new `kid` and `nbf` (not-before timestamp).
 3. AtlaSent runtime switches to new signing key at `nbf`.
 4. Previous key removed from JWKS 30 days after rotation.
 
@@ -146,7 +146,7 @@ Both use the same Ed25519 scheme described above.
 This repository (`atlasent-keys`) is the trust root for all AtlaSent permit signatures:
 
 - `cosign.pub` — container image signing key (Sigstore cosign)
-- `.well-known/permit-signing-keys.json` — permit signing JWKS
+- `docs/permit-signing-keys.json` — permit signing JWKS (example / pinned reference)
 - `docs/permit-signature-scheme.md` — this document
 
 The repository is protected: direct pushes to `main` are prohibited and all changes require a signed commit from an authorized maintainer.
