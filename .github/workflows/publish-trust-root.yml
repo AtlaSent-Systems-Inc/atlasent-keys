@@ -4,7 +4,7 @@ name: publish-trust-root
 #
 # On push to main:
 #   1. Validate each .well-known/*.json against its JSON Schema
-#      (pulled from atlasent-systems-inc/atlasent main).
+#      (checked into schemas/trust-root/v1/ alongside the key material).
 #   2. Recompute sha256 of each non-index .well-known file and
 #      patch trust-root.json's resources[].sha256 in place.
 #   3. Cosign sign each .well-known/*.json keyless via Sigstore (R4 keyless).
@@ -26,10 +26,12 @@ on:
     branches: [main]
     paths:
       - '.well-known/**'
+      - 'schemas/trust-root/**'
       - '.github/workflows/publish-trust-root.yml'
   pull_request:
     paths:
       - '.well-known/**'
+      - 'schemas/trust-root/**'
       - '.github/workflows/publish-trust-root.yml'
   workflow_dispatch: {}
 
@@ -42,7 +44,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  ATLASENT_REF: main
   SCHEMA_DIR: schemas/trust-root/v1
   WELL_KNOWN_DIR: .well-known
 
@@ -56,14 +57,12 @@ jobs:
       - name: install check-jsonschema
         run: pipx install check-jsonschema
 
-      - name: fetch schemas from atlasent
+      - name: copy local schemas
         run: |
           set -euo pipefail
           mkdir -p .schemas
           for f in atlasent-trust-root atlasent-verifier-keys atlasent-revocations atlasent-sigstore-identities; do
-            curl -sfL \
-              "https://raw.githubusercontent.com/AtlaSent-Systems-Inc/atlasent/${ATLASENT_REF}/${SCHEMA_DIR}/${f}.schema.json" \
-              -o ".schemas/${f}.schema.json"
+            cp "${SCHEMA_DIR}/${f}.schema.json" ".schemas/${f}.schema.json"
           done
           ls -la .schemas/
 

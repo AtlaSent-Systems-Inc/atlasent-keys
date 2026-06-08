@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keys.atlasent.io/schemas/trust-root/v1/atlasent-trust-root.schema.json",
+  "title": "AtlaSent trust-root index",
+  "description": "The signed index document at /.well-known/atlasent-trust-root.json. Lists the other trust-root resources, their hashes, the OIDC identity that signs them, and the index's own validity window. ADR-005 D3 makes valid_until required so verifiers can fail closed when the snapshot expires.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "issued_at",
+    "valid_until",
+    "trust_root_signer",
+    "resources",
+    "v2_anchors"
+  ],
+  "properties": {
+    "schema": {
+      "description": "Schema identifier and version. Hard-coded for forward-compatibility.",
+      "const": "atlasent-trust-root/v1"
+    },
+    "issued_at": {
+      "description": "RFC 3339 timestamp at which this index was published.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "valid_until": {
+      "description": "RFC 3339 timestamp after which verifiers MUST treat this index as expired. Per ADR-005 D3, default behaviour is fail-closed; callers may opt out with allow_expired_snapshot.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "trust_root_signer": {
+      "description": "Identity that signed this index and the listed resources. Verifiers pin this string and reject signatures that don't match.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sigstore_identity", "oidc_issuer"],
+      "properties": {
+        "sigstore_identity": {
+          "description": "Fully-qualified OIDC subject of the publishing workflow.",
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        },
+        "oidc_issuer": {
+          "description": "OIDC issuer URL that minted the Sigstore identity token (typically https://token.actions.githubusercontent.com).",
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        }
+      }
+    },
+    "resources": {
+      "description": "The other trust-root files this index covers. Each entry carries its sha256 and the path to its detached cosign signature.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256", "sig"],
+        "properties": {
+          "path": {
+            "description": "Absolute path on the trust-root host (e.g. /.well-known/atlasent-verifier-keys.json).",
+            "type": "string",
+            "pattern": "^/.+$"
+          },
+          "sha256": {
+            "description": "Hex-encoded SHA-256 digest of the resource bytes.",
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "sig": {
+            "description": "Absolute path to the detached cosign signature for the resource.",
+            "type": "string",
+            "pattern": "^/.+\\.sig$"
+          }
+        }
+      }
+    },
+    "v2_anchors": {
+      "description": "Forward-looking anchors for V2 transparency-log integration. Verifiers MUST tolerate null and fall back to direct signature checks. Populated when V2 ships.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["transparency_log_url", "transparency_log_pubkey"],
+      "properties": {
+        "transparency_log_url": {
+          "description": "V2 transparency log URL. Null in V1.",
+          "type": ["string", "null"],
+          "format": "uri"
+        },
+        "transparency_log_pubkey": {
+          "description": "V2 transparency log public key, PEM-encoded. Null in V1.",
+          "type": ["string", "null"]
+        }
+      }
+    }
+  }
+}
