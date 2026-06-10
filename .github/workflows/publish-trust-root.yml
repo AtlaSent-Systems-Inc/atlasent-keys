@@ -115,7 +115,6 @@ jobs:
           # the entry in place. Resources whose path doesn't resolve to a
           # file under the repo root are a hard error.
           resources=$(jq -c '.resources[]' "${index}")
-          updated="${tmp}"
           while IFS= read -r entry; do
             path=$(echo "${entry}" | jq -r '.path')
             # paths in the index are absolute on the served host, e.g.
@@ -126,10 +125,14 @@ jobs:
               exit 1
             fi
             real_sha=$(sha256sum "${local_path}" | awk '{print $1}')
-            updated=$(jq --arg p "${path}" --arg s "${real_sha}" \
-              '(.resources[] | select(.path == $p) | .sha256) = $s' "${updated}" \
-              | tee "${tmp}.next" >/dev/null && cat "${tmp}.next")
-            echo "${updated}" > "${tmp}"
+            # Patch this entry's sha256 by editing the working file in place.
+            # (Earlier this round-tripped through an `updated` var that was
+            # reused as both filename and JSON content — so iteration 2+ passed
+            # the JSON document as a filename to jq and died with "Could not
+            # open file {...}". Operate on ${tmp} directly to avoid that.)
+            jq --arg p "${path}" --arg s "${real_sha}" \
+              '(.resources[] | select(.path == $p) | .sha256) = $s' "${tmp}" > "${tmp}.next"
+            mv "${tmp}.next" "${tmp}"
           done <<< "${resources}"
 
           # Pretty-print and write back if changed.
