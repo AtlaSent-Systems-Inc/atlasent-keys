@@ -7,6 +7,12 @@
       "role": "R3_audit",
       "revoked_at": "2026-05-28T00:00:00Z",
       "reason": "Test key; superseded by v2-audit-2026"
+    },
+    {
+      "kid": "test-key",
+      "role": "R3_audit",
+      "revoked_at": "2026-06-10T00:00:00Z",
+      "reason": "Replaced by v2-audit-2026; revocation flag corrected to match replaced_by field"
     }
   ],
   "revoked_identities": []

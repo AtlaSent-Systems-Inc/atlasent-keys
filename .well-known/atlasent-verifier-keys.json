@@ -25,7 +25,7 @@
       "valid_from": "2026-01-01T00:00:00Z",
       "valid_until": "2027-01-01T00:00:00Z",
       "replaced_by": "v2-audit-2026",
-      "revoked": false,
+      "revoked": true,
       "tenant": null
     },
     {
