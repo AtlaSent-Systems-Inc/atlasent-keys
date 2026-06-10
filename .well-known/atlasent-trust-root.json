@@ -9,7 +9,7 @@
   "resources": [
     {
       "path": "/.well-known/atlasent-verifier-keys.json",
-      "sha256": "117a6c677099cc53f41ca7fb25d404c7112b0c1287133d434f721439d41a26b4",
+      "sha256": "73c6c9f3a8668d06b82c56d36a7e5aca37ca83d16348ea52ef68830e3a369aed",
       "sig": "/.well-known/atlasent-verifier-keys.json.sig"
     },
     {
@@ -19,7 +19,7 @@
     },
     {
       "path": "/.well-known/atlasent-revocations.json",
-      "sha256": "662a0d21fabd8d59b73fb4835422ab79856f137e4d10d2a39b82989f8c82c682",
+      "sha256": "6b73b0421a3aaaee80c7fdce47de2426bc7837bfcdd6cfdec53741dd06997a24",
       "sig": "/.well-known/atlasent-revocations.json.sig"
     }
   ],
