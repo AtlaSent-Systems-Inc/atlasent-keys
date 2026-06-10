@@ -7,7 +7,7 @@
       "key_ops": ["verify"],
       "kid": "permit-signing-v1",
       "alg": "EdDSA",
-      "x": "placeholder_replace_with_real_base64url_encoded_public_key_32_bytes",
+      "x": "N_UZmf25o4Bx65MSUzYv3StIE_IRwyXtkUbKXd7d-L4",
       "nbf": 1748563200,
       "description": "Primary permit signing key — active from 2026-05-30"
     }
