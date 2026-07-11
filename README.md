@@ -3,9 +3,11 @@
 > **What this repo is (and is NOT).**
 >
 > **Is:** A static HTTP host serving AtlaSent's published public
-> verification keys. The container is a five-line Nginx image that copies
-> the repo root into `/usr/share/nginx/html`. The current asset is
-> `cosign.pub`, used to verify signed runtime artifacts.
+> verification keys and trust-root documents. The container is a
+> five-line Nginx image that copies the repo root into
+> `/usr/share/nginx/html`. Assets include `cosign.pub` (used to verify
+> signed runtime artifacts) and the `.well-known/` trust-root index,
+> verifier-keys JWKS, accepted Sigstore identities, and revocation list.
 >
 > **Is NOT:** A Key Management Service (KMS), an HSM, a secrets store,
 > a private-key manager, or anything that holds, signs with, or controls
@@ -23,6 +25,11 @@
 ## Current assets
 
 - `cosign.pub` — public key for verifying Sigstore-signed runtime artifacts
+- `.well-known/atlasent-trust-root.json` — signed canonical index of trust-root resources (each entry names its `sha256` and its `.bundle` signature)
+- `.well-known/atlasent-verifier-keys.json` — R2 (permit) + R3 (audit) Ed25519 verifier-keys JWKS
+- `.well-known/atlasent-sigstore-identities.json` — accepted Sigstore/Fulcio signing identities
+- `.well-known/atlasent-revocations.json` — revoked KIDs and signing identities
+- `*.json.bundle` — cosign Sigstore bundles for each `.well-known/*.json`, produced by the publish workflow
 
 ## Used for
 
