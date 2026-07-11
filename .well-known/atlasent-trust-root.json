@@ -10,17 +10,17 @@
     {
       "path": "/.well-known/atlasent-verifier-keys.json",
       "sha256": "73c6c9f3a8668d06b82c56d36a7e5aca37ca83d16348ea52ef68830e3a369aed",
-      "sig": "/.well-known/atlasent-verifier-keys.json.sig"
+      "sig": "/.well-known/atlasent-verifier-keys.json.bundle"
     },
     {
       "path": "/.well-known/atlasent-sigstore-identities.json",
       "sha256": "e1e5b768bbd9ba350678b0b3a2e0ffede71c6ade2df63765e36d251db97d32ef",
-      "sig": "/.well-known/atlasent-sigstore-identities.json.sig"
+      "sig": "/.well-known/atlasent-sigstore-identities.json.bundle"
     },
     {
       "path": "/.well-known/atlasent-revocations.json",
       "sha256": "6b73b0421a3aaaee80c7fdce47de2426bc7837bfcdd6cfdec53741dd06997a24",
-      "sig": "/.well-known/atlasent-revocations.json.sig"
+      "sig": "/.well-known/atlasent-revocations.json.bundle"
     }
   ],
   "v2_anchors": {

@@ -46,9 +46,9 @@ See TRUST_ROOT_ARCHITECTURE.md §3 for the full layout. Concretely:
 └── CHANGELOG
 ```
 
-Every `.well-known/*.json` is accompanied by `*.json.sig`, a cosign
-signature over the file produced by the publish workflow's Sigstore
-identity.
+Every `.well-known/*.json` is accompanied by `*.json.bundle`, a cosign
+Sigstore bundle (signature + certificate + Rekor entry) over the file
+produced by the publish workflow's Sigstore identity.
 
 ## Rename + alias plan
 
