@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keys.atlasent.io/schemas/trust-root/v1/atlasent-trust-root-registry.schema.json",
+  "title": "AtlaSent Trust Root Registry",
+  "description": "Foundation Convergence Program (WS5). An INVENTORY of every signing purpose across the runtime and trust root — a superset of the published JWKS (atlasent-verifier-keys) that also records symmetric/unpublished signers and the provenance/self-test metadata whose ABSENCE caused the trust-plane defects (advertised-public-key != signer counterpart; runtime key_version != published kid; acceptance verifying the runtime self-reported key instead of the published trust root). DESIGN ARTIFACT: this schema defines the registry shape; it MUST NOT be populated with real key material here (atlasent-keys holds no private keys, and symmetric keys are never publishable). Full analysis: atlasent-docs/foundation/TRUST_PLANE_MAP.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "issued_at", "signers"],
+  "properties": {
+    "schema": { "const": "atlasent-trust-root-registry/v1" },
+    "issued_at": { "type": "string", "format": "date-time" },
+    "signers": {
+      "type": "array",
+      "minItems": 0,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/signer" }
+    }
+  },
+  "$defs": {
+    "signer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kid", "purpose", "scheme", "symmetric", "custody_source", "selector_kind"],
+      "properties": {
+        "kid": {
+          "description": "Canonical selector. For an asymmetric signer whose signatures are verified downstream, this MUST equal the runtime key_version/key_id that stamps the signature (the contract missing when runtime key_version=v1 diverged from published kid=v2-audit-2026).",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "key_version": {
+          "description": "Explicit alias of the runtime-stamped version, recorded separately because the published JWKS is additionalProperties:false with no alias field — which is why the selector break could not be expressed there.",
+          "type": ["string", "null"]
+        },
+        "role": {
+          "description": "Published trust-root role, when this signer is publishable.",
+          "type": ["string", "null"],
+          "enum": ["R1_release", "R2_permit", "R3_audit", "R4_pack", null]
+        },
+        "purpose": {
+          "description": "Finer than role — multiple purposes collapse onto R2/R3 today.",
+          "type": "string",
+          "enum": [
+            "audit-chain", "permit", "audit-export", "proof",
+            "evidence-package", "bundle-manifest", "approval",
+            "trust-root", "gxp-esignature", "request-auth"
+          ]
+        },
+        "scheme": {
+          "description": "Signature scheme.",
+          "type": "string",
+          "enum": ["ed25519", "ecdsa-p256", "cose-sign1", "hmac-sha256", "sigstore-keyless"]
+        },
+        "symmetric": {
+          "description": "true for HMAC/shared-secret signers (permit pt.v2, bundle-manifest, request-auth). A symmetric signer is inventory-only and MUST NEVER be published to the JWKS or any public trust root.",
+          "type": "boolean"
+        },
+        "publishable": {
+          "description": "Whether this signer's public half belongs in the published trust root. MUST be false whenever symmetric is true.",
+          "type": "boolean"
+        },
+        "custody_source": {
+          "description": "Where the private/secret half lives — env-var name, KMS key ARN/id, or DB table. Provenance for audit; never the secret value.",
+          "type": "string"
+        },
+        "public_key_fingerprint": {
+          "description": "SHA-256 fingerprint of the public key (never the key material for symmetric signers).",
+          "type": ["string", "null"]
+        },
+        "selector_kind": {
+          "description": "How a verifier selects this key — makes the today-implicit selection contract explicit.",
+          "type": "string",
+          "enum": ["by_key_version", "by_key_id", "single_env_key", "sigstore_identity", "shared_secret"]
+        },
+        "advertised_key_verified": {
+          "description": "Proof that the advertised public key is the true signer counterpart — the load-time sign->verify self-test result. Its absence on permit/export/proof/EGAS/approval signers is the open gap (only the audit signer has this today).",
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "verified": { "type": "boolean" },
+            "fingerprint": { "type": "string" },
+            "at": { "type": "string", "format": "date-time" },
+            "selftest_mode": { "enum": ["enforce", "warn", "off"] }
+          }
+        },
+        "valid_from": { "type": ["string", "null"], "format": "date-time" },
+        "valid_until": { "type": ["string", "null"], "format": "date-time" },
+        "supersedes": { "type": ["string", "null"] },
+        "replaced_by": { "type": ["string", "null"] },
+        "revoked": { "type": "boolean" },
+        "revoked_at": { "type": ["string", "null"], "format": "date-time" },
+        "revocation_reason": { "type": ["string", "null"] },
+        "tenant": { "type": ["string", "null"] },
+        "issuer": {
+          "description": "For R1/trust-root: the Sigstore identity + OIDC issuer. For derived keys: the deriving runtime.",
+          "type": ["string", "null"]
+        },
+        "source_bundle_sig": {
+          "description": "Link to the cosign .bundle that signs this registry entry, when published.",
+          "type": ["string", "null"]
+        }
+      },
+      "allOf": [
+        {
+          "$comment": "A symmetric signer must never be marked publishable.",
+          "if": { "properties": { "symmetric": { "const": true } } },
+          "then": { "properties": { "publishable": { "const": false } } }
+        }
+      ]
+    }
+  }
+}
