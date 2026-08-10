@@ -87,12 +87,58 @@ jobs:
     needs: validate
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    environment: trust-root-publish
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # Pull just enough history to push back to main.
           fetch-depth: 1
+
+      # ── AtlaSent publish gate ────────────────────────────────────────
+      # Dogfooding fix: this job used to auto-sign and republish the
+      # trust root (the file every AtlaSent permit/audit signature is
+      # verified against) on any push to main touching .well-known/**,
+      # with no authorization check of any kind. This step closes that.
+      #
+      # Gate closed: if the permit is not verified, the job exits here
+      # and nothing is recomputed, signed, or pushed.
+      #
+      # Action-type note: uses `production.deploy` as an interim, proven
+      # choice — the same action type atlasent-sdk's publish-npm.yml /
+      # publish-pypi.yml already gate on successfully. The semantically
+      # correct classification for a trust-root publish is
+      # `artifact.release` (CANON-000002), which additionally requires a
+      # verified actor identity (ACTOR_TRUSTED_ISSUERS) and a supply_chain
+      # assertion — deferred until GitHub-OIDC-as-verified-actor and a
+      # supply_chain assertion issuer exist for CI callers (not wired for
+      # any repo yet, not just this one). Migrate this to `artifact.release`
+      # once that lands.
+      #
+      # Break-glass: no automatic bypass exists. If the AtlaSent API is
+      # unreachable, trust-root publishing blocks by design — including
+      # during an incident where a rotation is needed because something
+      # was compromised. Emergency override is a reviewed PR that
+      # temporarily removes this step, never a silent flag.
+      #
+      # Requires an `ATLASENT_API_KEY` secret (scopes: evaluate:write,
+      # verify:execute) provisioned on the `trust-root-publish` GitHub
+      # Environment above. Until that secret exists, every run of this
+      # job fails here by design — do not merge this change until the
+      # key is provisioned, or trust-root publishing (including
+      # legitimate key rotations) will be blocked.
+      - name: AtlaSent publish gate
+        uses: AtlaSent-Systems-Inc/atlasent-action@v1
+        env:
+          ATLASENT_API_KEY: ${{ secrets.ATLASENT_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          action: production.deploy
+          api-url: https://kttccumlnmdtupgbyfue.supabase.co/functions/v1
+          actor: ${{ github.actor }}
+          target-id: atlasent-trust-root
+          environment: production
+          context: '{"ref": "${{ github.ref }}", "repo": "${{ github.repository }}", "artifact": "trust-root"}'
 
       - name: Install cosign
         # R4 keyless: OIDC short-lived cert via Sigstore Fulcio. No private key.

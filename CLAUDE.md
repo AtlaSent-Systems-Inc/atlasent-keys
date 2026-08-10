@@ -63,6 +63,35 @@ The CI workflow (`publish-trust-root.yml`) uses **cosign keyless signing**
 via Sigstore: the signing identity is the GitHub Actions OIDC token — no
 long-lived private key is required.
 
+## Publish gate (AtlaSent dogfood)
+
+`sign-and-publish` is gated by a real AtlaSent evaluate/permit call
+(`AtlaSent publish gate` step, `action: production.deploy`) before anything
+is recomputed, signed, or pushed back to main. This closed a real gap: the
+job previously auto-signed and republished the trust root — the file every
+AtlaSent permit/audit signature is verified against — on any push to main
+touching `.well-known/**`, with no authorization check at all.
+
+- **Requires an `ATLASENT_API_KEY` secret** (scopes `evaluate:write` +
+  `verify:execute`) on the `trust-root-publish` GitHub Environment. Until
+  that secret is provisioned, every run fails at the gate step by design —
+  this is correct fail-closed behavior, not a bug, but it means trust-root
+  publishing (including legitimate key rotations) is blocked until the key
+  exists.
+- **Action-type choice is interim.** `production.deploy` is used because
+  it's the same action type already proven working in atlasent-sdk's npm/
+  PyPI publishers. The semantically correct classification is
+  `artifact.release` (CANON-000002), which additionally requires a
+  verified actor identity and a supply_chain assertion — not usable yet
+  because GitHub-OIDC-as-verified-actor and a supply_chain assertion
+  issuer aren't wired for any repo's CI caller. Migrate to
+  `artifact.release` once that exists.
+- **No automatic break-glass.** If the AtlaSent API is unreachable,
+  publishing blocks — including mid-incident, when the reason you need a
+  rotation might be that something is compromised. The override is a
+  reviewed PR that temporarily removes the gate step, never a silent
+  bypass flag.
+
 ## Schemas
 
 JSON Schemas for all `.well-known/` files live in `schemas/trust-root/v1/`.
