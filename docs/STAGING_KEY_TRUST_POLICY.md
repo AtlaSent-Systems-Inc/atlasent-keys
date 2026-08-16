@@ -27,9 +27,14 @@ a gap to close by adding it.
   permits widens the blast radius of a staging compromise into the thing
   that's supposed to prove production integrity.
 - **No precedent for it.** Every entry in `atlasent-verifier-keys.json`
-  today (`v2-audit-2026`, `ak_2026_q3_atlasent_permit`, and the retired/
-  revoked entries) is production or historical-production key material.
-  Staging has never had an entry here.
+  today is either live production key material (`v2-audit-2026`,
+  `ak_2026_q3_atlasent_permit`) or a pre-tenant-adoption placeholder KID
+  (`test-key`, `permit-kid`, `revoked-kid` — see
+  [`.well-known/README.md`](../.well-known/README.md), "What ops must do
+  before verifier adoption"). Staging **runtime** signing keys have never
+  had an entry here, and the placeholders are not a precedent for adding
+  one — they exist to validate the schema/publish pipeline, not to attest
+  any environment's signing identity.
 - **The schema doesn't model environment today**
   (`schemas/trust-root/v1/atlasent-verifier-keys.schema.json` is
   `additionalProperties: false` with no `environment` field). Adding one

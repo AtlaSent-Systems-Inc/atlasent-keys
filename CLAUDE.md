@@ -39,7 +39,7 @@ The deployed host is `https://keys.atlasent.io` (future: `https://trust-root.atl
 |---|---|
 | `/cosign.pub` | ECDSA P-256 public key for Sigstore cosign verification of AtlaSent release artifacts |
 | `/.well-known/atlasent-trust-root.json` | Canonical index of all trust-root resources with SHA-256 digests |
-| `/.well-known/atlasent-verifier-keys.json` | JWKS containing R2 (permit) and R3 (audit) Ed25519 public keys. **Production keys only** — staging keys are deliberately excluded; see [`docs/STAGING_KEY_TRUST_POLICY.md`](docs/STAGING_KEY_TRUST_POLICY.md). |
+| `/.well-known/atlasent-verifier-keys.json` | JWKS containing R2 (permit) and R3 (audit) Ed25519 public keys. Current entries are production and placeholder/historical material (see [`.well-known/README.md`](.well-known/README.md)) — staging runtime signing keys specifically are deliberately excluded; see [`docs/STAGING_KEY_TRUST_POLICY.md`](docs/STAGING_KEY_TRUST_POLICY.md). |
 | `/.well-known/atlasent-sigstore-identities.json` | Accepted Sigstore/Fulcio OIDC identities for AtlaSent release signing |
 | `/.well-known/atlasent-revocations.json` | Revoked key IDs and signing identities |
 | `docs/permit-signing-keys.json` | JWKS for verifying `AuthorizedTransitionSpec` Ed25519 signatures (pinned reference) |
