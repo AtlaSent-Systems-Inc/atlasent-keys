@@ -18,8 +18,8 @@
 > The name `atlasent-keys` is descriptive of its content (public
 > verification keys — the kind anyone is expected to download and
 > verify against), not its capability. AtlaSent does not hold a
-> long-lived private signing key: production releases are signed with
-> cosign **keyless** signing, where the signing identity is the
+> long-lived private release-signing key: production releases are signed
+> with cosign **keyless** signing, where the signing identity is the
 > short-lived GitHub Actions OIDC token issued through Sigstore.
 
 ## Current assets
@@ -36,6 +36,7 @@
 - supply-chain verification
 - runtime artifact verification
 - deployment provenance validation
+- independent permit and audit-evidence verification
 
 ## How it ships
 
@@ -49,24 +50,29 @@ EXPOSE 80
 
 Building the image produces a container that serves every file at the
 repo root over HTTP. Consumers (cosign, CI verifiers, deployment gates)
-fetch `cosign.pub` and use it to verify Sigstore-signed artifacts.
+fetch the public verification material and validate signatures without
+requiring access to AtlaSent private infrastructure.
 
 ## Where actual key management happens
 
-Production AtlaSent key management lives elsewhere:
+Production key management is intentionally outside this public repository:
 
-- **Cosign keyless signing** (via Sigstore + OIDC) — no long-lived
-  private signing key in any AtlaSent system; signing identity is the
-  GitHub Actions OIDC token.
-- **Tenant API keys** — issued and rotated through `atlasent-api`, not
-  this repo.
-- **Customer-side KMS / HSM** integration for evidence-export signing
-  — documented in
-  [`atlasent-gxp-starter/docs/production-signing.md`](https://github.com/AtlaSent-Systems-Inc/atlasent-gxp-starter/blob/main/docs/production-signing.md).
+- **Release signing** uses Sigstore + GitHub OIDC keyless signing; no long-lived
+  release-signing private key is stored here.
+- **Tenant API keys** are issued and rotated by the AtlaSent runtime, not this repo.
+- **Customer-managed KMS / HSM** integrations for customer-controlled signing
+  remain in the customer's deployment boundary; this repository publishes only
+  the public material needed by verifiers.
 
-None of those touch this repository.
+None of those paths place private keys or tenant credentials in this repository.
 
-## See also
+## Verification ecosystem
 
-- [Versioning doctrine](https://github.com/AtlaSent-Systems-Inc/atlasent/blob/main/VERSIONING_DOCTRINE.md)
-- [V1 pilot scope](https://github.com/AtlaSent-Systems-Inc/atlasent-internal/blob/main/pilot-readiness/v1-pilot-scope.md)
+- [`atlasent-verify`](https://github.com/AtlaSent-Systems-Inc/atlasent-verify) — standalone offline audit-chain verifier
+- [`atlasent-sdk`](https://github.com/AtlaSent-Systems-Inc/atlasent-sdk) — public client SDKs and wire contract
+- [`atlasent-action`](https://github.com/AtlaSent-Systems-Inc/atlasent-action) — execution-time authorization gate for GitHub Actions
+
+If a public verifier needs a trust root, revocation list, or published verifier
+key, this repository is the public source. Product-internal runbooks and customer
+configuration are deliberately not prerequisites for understanding what is
+published here.
