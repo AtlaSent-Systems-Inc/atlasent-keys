@@ -26,7 +26,7 @@
 
 - `cosign.pub` — public key for verifying Sigstore-signed runtime artifacts
 - `.well-known/atlasent-trust-root.json` — signed canonical index of trust-root resources (each entry names its `sha256` and its `.bundle` signature)
-- `.well-known/atlasent-verifier-keys.json` — R2 (permit) + R3 (audit) Ed25519 verifier-keys JWKS
+- `.well-known/atlasent-verifier-keys.json` — R2 (permit) + R3 (audit) Ed25519 verifier-keys JWKS. Current entries are production and placeholder/historical material (see [`.well-known/README.md`](.well-known/README.md) for which is which) — **staging runtime signing keys are excluded specifically**, deliberately and never published here; see [`docs/STAGING_KEY_TRUST_POLICY.md`](docs/STAGING_KEY_TRUST_POLICY.md).
 - `.well-known/atlasent-sigstore-identities.json` — accepted Sigstore/Fulcio signing identities
 - `.well-known/atlasent-revocations.json` — revoked KIDs and signing identities
 - `*.json.bundle` — cosign Sigstore bundles for each `.well-known/*.json`, produced by the publish workflow
