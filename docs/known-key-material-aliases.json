@@ -1,0 +1,10 @@
+{
+  "description": "Human-reviewed allowlist of documented key-material aliases: clusters of KIDs in .well-known/atlasent-verifier-keys.json that intentionally share identical public-key material. Every cluster listed here MUST have every member revoked=true — an active member sharing material with anything is always a hard failure regardless of this file (see scripts/verify-trust-root-integrity.mjs classifyDuplicateMaterial). Add an entry here only after confirming the sharing is intentional/historical, never to silence a validator failure on a real collision.",
+  "entries": [
+    {
+      "kids": ["test-key", "permit-kid", "revoked-kid"],
+      "reason": "Pre-tenant-adoption placeholder KIDs seeded to validate the schema/publish pipeline before real tenant keys existed. Not attestations of any environment's signing identity. All three are revoked.",
+      "doc_ref": ".well-known/README.md (\"What ops must do before verifier adoption\") and docs/AUDIT_KEY_VERSION_RECONCILIATION.md"
+    }
+  ]
+}
