@@ -27,11 +27,17 @@ on:
     paths:
       - '.well-known/**'
       - 'schemas/trust-root/**'
+      - 'docs/**'
+      - 'scripts/**'
+      - 'cosign.pub'
       - '.github/workflows/publish-trust-root.yml'
   pull_request:
     paths:
       - '.well-known/**'
       - 'schemas/trust-root/**'
+      - 'docs/**'
+      - 'scripts/**'
+      - 'cosign.pub'
       - '.github/workflows/publish-trust-root.yml'
   workflow_dispatch: {}
 
@@ -81,6 +87,23 @@ jobs:
             echo "==> validating ${f} against ${s}"
             check-jsonschema --schemafile "${s}" "${f}"
           done
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: trust-root integrity guard (deterministic, dependency-free)
+        # Schema validation above checks SHAPE. This checks MEANING:
+        # KID/key-material uniqueness and duplicate classification,
+        # cryptographic public-key encoding validity, lifecycle date
+        # ordering, cross-file (verifier-keys <-> revocations) ledger
+        # consistency, the staging-key-must-never-be-published policy
+        # (docs/STAGING_KEY_TRUST_POLICY.md), and a targeted scan for
+        # accidentally-committed private key material. Read-only —
+        # never writes to .well-known/. See
+        # docs/TRUST_ROOT_INTEGRITY_INVARIANTS.md for the full list and
+        # scripts/verify-trust-root-integrity.mjs for the source.
+        run: node scripts/verify-trust-root-integrity.mjs
 
   sign-and-publish:
     name: sign and publish signatures

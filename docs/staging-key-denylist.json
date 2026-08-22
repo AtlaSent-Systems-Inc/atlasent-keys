@@ -1,0 +1,11 @@
+{
+  "description": "Machine-readable mirror of docs/STAGING_KEY_TRUST_POLICY.md's decision: known non-production signing key material that must NEVER appear in this repo's published trust root (.well-known/*.json, docs/permit-signing-keys.json). Checked by scripts/verify-trust-root-integrity.mjs. Add an entry whenever a staging/non-production kid or key is confirmed live and explicitly kept out of the public trust root per that policy doc — do not add production material here.",
+  "entries": [
+    {
+      "kid": "4d8b824fb0e827dc",
+      "x": "h0b-yO8AgeLJXt9pF_DMaq9pHdeD0cJFpoNJ0rqIY0Q",
+      "environment": "atlasent-api runtime staging (lwnqpmnxpeyhpxvastku)",
+      "policy_doc": "docs/STAGING_KEY_TRUST_POLICY.md"
+    }
+  ]
+}
