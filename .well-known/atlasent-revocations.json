@@ -13,6 +13,12 @@
       "role": "R3_audit",
       "revoked_at": "2026-06-10T00:00:00Z",
       "reason": "Replaced by v2-audit-2026; revocation flag corrected to match replaced_by field"
+    },
+    {
+      "kid": "permit-kid",
+      "role": "R2_permit",
+      "revoked_at": "2026-08-10T09:39:34Z",
+      "reason": "Vendor-fixture placeholder R2_permit key, superseded by ak_2026_q3_atlasent_permit; revoked in atlasent-verifier-keys.json commit 0f97f0c but omitted from this ledger at the time"
     }
   ],
   "revoked_identities": []

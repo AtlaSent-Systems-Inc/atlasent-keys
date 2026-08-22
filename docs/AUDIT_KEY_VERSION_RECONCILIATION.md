@@ -84,8 +84,12 @@ actually signed under it; readers filter by `valid_from`/`valid_until`/`revoked`
 
 The JWKS also carries three placeholder entries that share one `x`
 (`uCfAGR92U9gKXqMmGs4MCoaTq-LmzoRe_aiwZE6UcnQ`): `test-key` (revoked),
-`revoked-kid` (revoked), and **`permit-kid` (R2_permit, NOT revoked)**. Test
-material with a non-revoked entry in a public trust root is worth a deliberate
-clean-up (revoke/remove `permit-kid`, or replace with the real permit key). Left
-untouched here because altering published/derived key material is an operator
-decision with downstream-verifier impact — track separately.
+`revoked-kid` (revoked), and **`permit-kid` (R2_permit, revoked)**. The
+clean-up this section originally called for (revoke `permit-kid`, or replace
+it with the real permit key) has since happened: commit `0f97f0c`
+("rotate R2 permit key off placeholder material", 2026-08-10) added the real
+`ak_2026_q3_atlasent_permit` signing key and set `permit-kid`'s `revoked` flag
+to `true`. That same commit did not add a matching entry to
+`atlasent-revocations.json`'s `revoked_keys`, which was a separate, smaller
+gap tracked and closed in
+[`TRUST_ROOT_INTEGRITY_INVARIANTS.md`](TRUST_ROOT_INTEGRITY_INVARIANTS.md).
