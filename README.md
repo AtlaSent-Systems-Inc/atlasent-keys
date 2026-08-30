@@ -1,5 +1,7 @@
 # atlasent-keys — Public Verification Material
 
+Public verification material and trust root for AtlaSent.
+
 > **What this repo is (and is NOT).**
 >
 > **Is:** A static HTTP host serving AtlaSent's published public
