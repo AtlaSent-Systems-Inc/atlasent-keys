@@ -1,5 +1,29 @@
 # Audit key ↔ `key_version` reconciliation
 
+> **RESOLVED 2026-09-12 — `kid: v1` is published and verified.** The
+> JWKS now carries an `R3_audit` entry with `kid: v1` equal to the runtime
+> `key_version`, whose material (`x:
+> r0leDQfIerrgVCb8M1shVf6L5Qer0C13qV3Dee70D3o`, SPKI SHA-256
+> `8c3d2752094d1d0a21097294867d7e51b73a223cf1c70d3872e699859a6187c7`) was
+> obtained from the runtime's own self-tested `{"pubkey":true}` response and
+> **verified 7/7 against production `audit_events` signatures spanning
+> 2026-06-07 → 2026-09-12** (`atlasent-internal`
+> `scripts/verify-audit-key-candidate.sh`; founder-run against the live
+> runtime, then independently re-run from the pasted PEM). Both candidate
+> explanations from the 2026-09-12 audit are closed: the seed did not change
+> (June rows verify) and the runtime derives its counterpart correctly (the
+> advertised key is the verifying key). The June publication was simply the
+> wrong value.
+>
+> `v2-audit-2026` is **revoked** in the same change (`replaced_by: v1`,
+> ledger entry in `atlasent-revocations.json`): it never signed a per-row
+> entry (0/7), and it never signed an export envelope either — every
+> production `v1-export-audit` call to date recorded an empty `key_id`
+> (`EXPORT_KID` has never been configured on the runtime project), so the
+> "maybe it is the export-envelope key" caveat below is answered in the
+> negative. The rest of this document is the history of how the gap was
+> found and is kept as-is.
+
 **Problem.** The offline verifier (`atlasent-verify`) selects the Ed25519 audit
 (R3) key by the `key_version` string stamped on each audit-chain entry. The
 running runtime stamps **`key_version: v1`**
@@ -59,7 +83,9 @@ Until a verified key is published, the trust page carries a withdrawal
 notice instead of a key; this JWKS entry stays as-is (not renamed, not yet
 revoked) pending confirmation of whether it is the **export-envelope** key
 (`EXPORT_KID`) — if it is, it should be relabelled as such rather than
-deleted.
+deleted. *(Superseded 2026-09-12 — see the resolution note at the top:
+the verified key is published as `v1`, and `v2-audit-2026` is confirmed
+not to be the export-envelope key either and is revoked.)*
 
 ## Do NOT rename `v2-audit-2026` → `v1` blind
 

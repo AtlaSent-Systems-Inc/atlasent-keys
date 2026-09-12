@@ -1,6 +1,6 @@
 {
   "schema": "atlasent-verifier-keys/v1",
-  "issued_at": "2026-08-10T09:39:34Z",
+  "issued_at": "2026-09-12T21:06:42Z",
   "keys": [
     {
       "kid": "v2-audit-2026",
@@ -11,8 +11,8 @@
       "x": "IctfKl2VEOaRBX9jvoYnUc2cInF81WgywU5iY3_Ui44",
       "valid_from": "2026-05-28T00:00:00Z",
       "valid_until": "2027-06-01T00:00:00Z",
-      "replaced_by": null,
-      "revoked": false,
+      "replaced_by": "v1",
+      "revoked": true,
       "tenant": null
     },
     {
@@ -66,6 +66,19 @@
       "valid_until": "2027-01-01T00:00:00Z",
       "replaced_by": null,
       "revoked": false
+    },
+    {
+      "kid": "v1",
+      "role": "R3_audit",
+      "kty": "OKP",
+      "crv": "Ed25519",
+      "alg": "EdDSA",
+      "x": "r0leDQfIerrgVCb8M1shVf6L5Qer0C13qV3Dee70D3o",
+      "valid_from": "2026-06-07T00:00:00Z",
+      "valid_until": "2027-07-08T00:00:00Z",
+      "replaced_by": null,
+      "revoked": false,
+      "tenant": null
     }
   ]
 }
