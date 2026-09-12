@@ -12,7 +12,7 @@ schemas in [`schemas/trust-root/v1/`](../schemas/trust-root/v1) in this repo.
 | File | Status | Notes |
 |---|---|---|
 | `atlasent-trust-root.json` | seeded | Index. `resources[].sha256` and `resources[].sig` point at each resource's bytes and its `.bundle`; the publish workflow recomputes the digests on push. |
-| `atlasent-verifier-keys.json` | populated | Carries R2 (permit) and R3 (audit) Ed25519 keys, each with a `kid`, validity window, and `revoked` flag. `test-key` / `permit-kid` / `revoked-kid` / `v2-audit-2026` remain placeholder/historical KIDs (`tenant: null`); `ak_2026_q3_atlasent_permit` (`role: R2_permit`, `tenant: "atlasent"`, `revoked: false`) is a real tenant-scoped key onboarded per the "What ops must do" steps below — the JWKS is no longer placeholder-only (see below). |
+| `atlasent-verifier-keys.json` | populated | Carries R2 (permit) and R3 (audit) Ed25519 keys, each with a `kid`, validity window, and `revoked` flag. **`v1` (`role: R3_audit`, `revoked: false`) is the production audit-entry signer's public half, verified 7/7 against production `audit_events` signatures on 2026-09-12 — its `kid` equals the runtime `key_version`, so `atlasent-audit-verify` selects it directly.** `test-key` / `permit-kid` / `revoked-kid` / `v2-audit-2026` are placeholder/historical KIDs, all revoked (`v2-audit-2026` revoked 2026-09-12: never the production signer — see `docs/AUDIT_KEY_VERSION_RECONCILIATION.md`); `ak_2026_q3_atlasent_permit` (`role: R2_permit`, `tenant: "atlasent"`, `revoked: false`) is a real tenant-scoped key onboarded per the "What ops must do" steps below. |
 | `atlasent-sigstore-identities.json` | seeded | R1 identities matching today's publishing workflows. |
 | `atlasent-revocations.json` | populated | Lists revoked KIDs (`revoked_keys`) and revoked signing identities (`revoked_identities`). New revocations land here when triggered by the runbook. |
 
@@ -44,6 +44,16 @@ remains the only active R3_audit key and has no `tenant` set. `test-key`
 and `revoked-kid` are historical/revoked placeholders. So SDK verifiers
 now DO have a real tenant-specific R2_permit key to look up by KID for
 tenant `atlasent`; only R3_audit onboarding remains placeholder-only.
+
+**Corrected again 2026-09-12.** The R3_audit half of the paragraph above
+is superseded: `v2-audit-2026` was never the production signer and is now
+revoked; the active R3_audit key is `v1`, verified against production
+signatures (see the table above). `v1` is the **per-row** `audit_events`
+signer. The export-**envelope** key id (`EXPORT_KID`, atlasent-api#947
+step 3) has still never been configured on the runtime project — every
+production export to date carries an empty `key_id` — so that step
+remains open, but it is no longer represented by placeholder material
+here.
 
 ## Schema validation
 
