@@ -28,6 +28,39 @@ and the verifier's PEM loader matches a block's `kid` header against the chain's
 They are not today: the runtime stamps `v1`; the trust root publishes
 `v2-audit-2026`. Reconcile by making them the same string.
 
+## Verified 2026-09-12: `v2-audit-2026` is NOT the production signer — and neither is the trust-page key
+
+Seven production `audit_events` signatures (all `key_version: v1`, sampled
+across 2026-06-07 → 2026-09-12) were verified offline with OpenSSL against
+every audit key AtlaSent publishes:
+
+| Candidate | Where | Result |
+|---|---|---|
+| `v2-audit-2026` (this JWKS, R3_audit) | `.well-known/atlasent-verifier-keys.json` | **0 / 7 verify** |
+| `key_version v1` as published on the trust page 2026-06-08 (SPKI `111a26ca…fb9d69`) | `atlasent-docs/trust/audit-signing-key.md` | **0 / 7 verify** |
+| placeholder material (`test-key` / `revoked-kid` / `permit-kid`) | this JWKS, revoked | 0 / 7 |
+| `permit-signing-v1` (R2, wrong domain) | `docs/permit-signing-keys.json` | 0 / 7 |
+
+So the "not confirmed" caveat below is now a confirmed negative. The
+procedure in this file still stands, with one change: **the runtime's own
+advertised counterpart (`{"pubkey":true}`) must itself be checked against a
+live production signature before it is published** — the value pinned as
+`ATLASENT_LOCAL_SIGNING_KEY_PUBLIC` in June was published exactly that way
+and turned out to be wrong; `atlasent-api`'s `_shared/kms/mod.ts` documents
+the same symptom ("the advertised key failed to verify the runtime's own
+audit-chain signatures") and now carries a load-time self-test. Derive the
+public half offline from the seed with OpenSSL as well, and publish only if
+both agree *and* verify a current production entry. Method, sampled
+(hash, signature) pairs, and a check script (`scripts/verify-audit-key-candidate.sh`,
+public-key input only) live in `atlasent-internal`
+`compliance/soc2/audits/2026-09-audit-key-publication-verification.md`.
+
+Until a verified key is published, the trust page carries a withdrawal
+notice instead of a key; this JWKS entry stays as-is (not renamed, not yet
+revoked) pending confirmation of whether it is the **export-envelope** key
+(`EXPORT_KID`) — if it is, it should be relabelled as such rather than
+deleted.
+
 ## Do NOT rename `v2-audit-2026` → `v1` blind
 
 The `v2-audit-2026` entry's key material (`x`) is **not confirmed** to be the

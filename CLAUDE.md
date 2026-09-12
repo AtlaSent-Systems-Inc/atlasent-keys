@@ -128,7 +128,7 @@ tenant-controlled KMS). The **public** counterparts to those signing keys
 are published here in `.well-known/atlasent-verifier-keys.json`:
 
 - **R2 (`permit`)** keys verify permit token signatures from `v1-verify-permit`
-- **R3 (`audit`)** keys verify Ed25519 signatures on `evaluation.completed` audit events
+- **R3 (`audit`)** keys verify the **outer Ed25519 signature on `v1-export-audit` envelopes** (`key_id` = `EXPORT_KID`). They do **not** verify per-row `audit_events.signature` entries: those are stamped under the runtime's separate `ATLASENT_LOCAL_SIGNING_KEY_VERSION` (`v1` on prod), which has never been published in this JWKS — and as of 2026-09-12 **no published key anywhere verifies those rows** (see `docs/AUDIT_KEY_VERSION_RECONCILIATION.md`, "Verified 2026-09-12"). An earlier version of this line said R3 keys verify `evaluation.completed` audit events; that was wrong on both counts.
 
 Callers and offline verifiers MUST fetch the JWKS from this trust root and
 select the key by `kid` to verify permit or audit signatures. Key rotation
