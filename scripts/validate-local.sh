@@ -8,8 +8,18 @@
 
 set -euo pipefail
 
-ATLASENT_REF="${ATLASENT_REF:-main}"
-SCHEMA_BASE="https://raw.githubusercontent.com/AtlaSent-Systems-Inc/atlasent/${ATLASENT_REF}/schemas/trust-root/v1"
+# Validate against THIS repo's own schema copies (schemas/trust-root/v1/),
+# the same ones the publish-trust-root CI `validate` job copies and checks
+# against (see .github/workflows/publish-trust-root.yml's "copy local
+# schemas" step, SCHEMA_DIR: schemas/trust-root/v1). This script previously
+# fetched schemas from a live raw.githubusercontent.com URL in the
+# *atlasent* repo instead — a different repo's copy that had already
+# drifted (it required resource "sig" paths to end in .sig, a stale R3
+# detached-signature convention; this repo's real files use R4 keyless
+# .bundle files per docs/TRUST_ROOT_INTEGRITY_INVARIANTS.md), so this
+# script failed against the real, currently-valid atlasent-trust-root.json
+# while CI passed it — the opposite of "mirroring what CI does".
+SCHEMA_DIR="${SCHEMA_DIR:-schemas/trust-root/v1}"
 WELL_KNOWN_DIR="${WELL_KNOWN_DIR:-.well-known}"
 
 if ! command -v check-jsonschema &>/dev/null; then
@@ -22,13 +32,13 @@ if ! command -v check-jsonschema &>/dev/null; then
   fi
 fi
 
-echo "Validating .well-known files against schemas on atlasent@${ATLASENT_REF}..."
+echo "Validating .well-known files against local schemas (${SCHEMA_DIR})..."
 echo ""
 
 FAILED=0
 for name in atlasent-trust-root atlasent-verifier-keys atlasent-revocations atlasent-sigstore-identities; do
   f="${WELL_KNOWN_DIR}/${name}.json"
-  schema="${SCHEMA_BASE}/${name}.schema.json"
+  schema="${SCHEMA_DIR}/${name}.schema.json"
   if [ ! -f "${f}" ]; then
     echo "SKIP: ${f} not found"
     continue
