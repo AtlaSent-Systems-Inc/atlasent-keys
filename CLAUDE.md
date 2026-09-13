@@ -79,6 +79,23 @@ touching `.well-known/**`, with no authorization check at all.
   every run fails at the gate step by design — this is correct fail-closed
   behavior, not a bug, but it means trust-root publishing (including
   legitimate key rotations) is blocked until the key exists.
+  **Provisioned 2026-09-13.** A dedicated key (org `923a3b8d-…`, scopes
+  `evaluate:write` + `verify:execute`, named "atlasent-keys trust-root
+  publish gate key") is set on the environment; run `34730372714` was the
+  first to pass the gate and commit re-signed bundles back (`aebdac8`).
+  Every earlier main-branch run had failed at the gate with HTTP 401 — the
+  secret that existed before was rejected by the runtime.
+  **The policy requires one approving PR review** (`require_approvals: 1`,
+  read live from the merged PR's reviews). A founder-authored, self-merged
+  PR has zero, so the gate denies with `missing QA approval` until a second
+  human approves the PR — get that approval **before** merging any change
+  under `.well-known/**`. The one time this was bypassed (2026-09-13, the
+  first re-sign after the audit-key correction, second reviewer
+  unavailable) it was done as a recorded 110-second exception — policy
+  versioned to 0 approvals and straight back to 1 with an identical rules
+  hash — logged in `atlasent-internal` `continuity/DECISION_LEDGER.md`.
+  Do not repeat that without a new ledger entry; do not leave the policy
+  at 0.
 - **`trust_root.publish` is a Canon specialization of `secret.rotate`
   (CANON-000035)** — see
   `atlasent/contract/canonical-actions/SPECIALIZATIONS.yaml`. `secret.rotate`
@@ -128,7 +145,7 @@ tenant-controlled KMS). The **public** counterparts to those signing keys
 are published here in `.well-known/atlasent-verifier-keys.json`:
 
 - **R2 (`permit`)** keys verify permit token signatures from `v1-verify-permit`
-- **R3 (`audit`)** keys cover two signatures. **`kid: v1`** (published 2026-09-12) is the **per-row `audit_events.signature`** signer — its `kid` equals the runtime `ATLASENT_LOCAL_SIGNING_KEY_VERSION` (`v1` on prod), and it was verified 7/7 against production rows spanning 2026-06-07 → 2026-09-12 before publication (`docs/AUDIT_KEY_VERSION_RECONCILIATION.md`, "RESOLVED 2026-09-12"). The **outer Ed25519 signature on `v1-export-audit` envelopes** (`key_id` = `EXPORT_KID`) is a separate key id that has **never been configured on the runtime project** — every production export to date carries an empty `key_id` — so no JWKS entry represents it yet. `v2-audit-2026`, which earlier versions of this line described as the R3 key, never signed anything on production and is revoked. **Publication gate:** an R3 key is added here only after `atlasent-internal`'s `scripts/verify-audit-key-candidate.sh` (or an equivalent check against a live production signature) passes — the June 2026 trust-page key was published without that check and verified nothing for three months.
+- **R3 (`audit`)** keys cover two signatures. **`kid: v1`** (published 2026-09-12) is the **per-row `audit_events.signature`** signer — its `kid` equals the runtime `ATLASENT_LOCAL_SIGNING_KEY_VERSION` (`v1` on prod), and it was verified 7/7 against production rows spanning 2026-06-07 → 2026-09-12 before publication (`docs/AUDIT_KEY_VERSION_RECONCILIATION.md`, "RESOLVED 2026-09-12"). The **outer Ed25519 signature on `v1-export-audit` envelopes** (`key_id` = `EXPORT_KID`) is a separate key id that has **never been configured on the runtime project** — every production export to date carries an empty `key_id` — so no JWKS entry represents it yet. `v2-audit-2026`, which earlier versions of this line described as the R3 key, verifies 0/7 sampled production rows and signed no export envelope (every production export records `key_id: ""`); it is revoked. **Publication gate:** an R3 key is added here only after `atlasent-internal`'s `scripts/verify-audit-key-candidate.sh` (or an equivalent check against a live production signature) passes — the June 2026 trust-page key was published without that check and verified nothing for three months.
 
 Callers and offline verifiers MUST fetch the JWKS from this trust root and
 select the key by `kid` to verify permit or audit signatures. Key rotation
