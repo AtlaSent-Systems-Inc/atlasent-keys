@@ -12,7 +12,7 @@ schemas in [`schemas/trust-root/v1/`](../schemas/trust-root/v1) in this repo.
 | File | Status | Notes |
 |---|---|---|
 | `atlasent-trust-root.json` | seeded | Index. `resources[].sha256` and `resources[].sig` point at each resource's bytes and its `.bundle`; the publish workflow recomputes the digests on push. |
-| `atlasent-verifier-keys.json` | populated | Carries R2 (permit) and R3 (audit) Ed25519 keys, each with a `kid`, validity window, and `revoked` flag. **`v1` (`role: R3_audit`, `revoked: false`) is the production audit-entry signer's public half, verified 7/7 against production `audit_events` signatures on 2026-09-12 — its `kid` equals the runtime `key_version`, so `atlasent-audit-verify` selects it directly.** `test-key` / `permit-kid` / `revoked-kid` / `v2-audit-2026` are placeholder/historical KIDs, all revoked (`v2-audit-2026` revoked 2026-09-12: never the production signer — see `docs/AUDIT_KEY_VERSION_RECONCILIATION.md`); `ak_2026_q3_atlasent_permit` (`role: R2_permit`, `tenant: "atlasent"`, `revoked: false`) is a real tenant-scoped key onboarded per the "What ops must do" steps below. |
+| `atlasent-verifier-keys.json` | populated | Carries R2 (permit) and R3 (audit) Ed25519 keys, each with a `kid`, validity window, and `revoked` flag. **`v1` (`role: R3_audit`, `revoked: false`) is the production audit-entry signer's public half, verified 7/7 against production `audit_events` signatures on 2026-09-12 — its `kid` equals the runtime `key_version`, so `atlasent-audit-verify` selects it directly.** `test-key` / `permit-kid` / `revoked-kid` / `v2-audit-2026` are placeholder/historical KIDs, all revoked (`v2-audit-2026` revoked 2026-09-12: never the production signer — see `docs/AUDIT_KEY_VERSION_RECONCILIATION.md`); `ak_2026_q3_atlasent_permit` (`role: R2_permit`, `tenant: "atlasent"`, `revoked: false`) is a real tenant-scoped key onboarded per the "What ops must do" steps below. **`ak_2026_q3_atlasent_audit` (`role: R3_audit`, `tenant: "atlasent"`, `revoked: false`, added 2026-09-14) is the export-envelope signer (`EXPORT_KID`), verified against a live production export before publication — see the 2026-09-14 note below.** |
 | `atlasent-sigstore-identities.json` | seeded | R1 identities matching today's publishing workflows. |
 | `atlasent-revocations.json` | populated | Lists revoked KIDs (`revoked_keys`) and revoked signing identities (`revoked_identities`). New revocations land here when triggered by the runbook. |
 
@@ -54,6 +54,23 @@ step 3) has still never been configured on the runtime project — every
 production export to date carries an empty `key_id` — so that step
 remains open, but it is no longer represented by placeholder material
 here.
+
+**Updated 2026-09-14 — the export-envelope R3 key is now configured and
+published.** `ak_2026_q3_atlasent_audit` (`role: R3_audit`, `tenant:
+"atlasent"`, `revoked: false`) is the public half of the runtime export
+signing key set on `kttccumlnmdtupgbyfue` on 2026-09-13 (`EXPORT_KID` =
+`ATLASENT_EXPORT_SIGNING_KEY_ID` = `ak_2026_q3_atlasent_audit`; SPKI
+fingerprint `1903850d6a201501`, which is also the `kid` `v1-signing-key`
+derives and advertises). Publication gate satisfied by an equivalent live
+check: a founder-run `atlasent-api` `scripts/export-kid-preflight.sh
+--require-accepted` on 2026-09-14 verified a fresh production export's
+outer signature against this exact material (`atlasent-audit-verify`
+v0.1.0, ACCEPTED, `key_id=ak_2026_q3_atlasent_audit`). It signs the
+**outer envelope** of `v1-export-audit` exports; `v1` remains the per-row
+`audit_events` signer — two keys, two roles, both `R3_audit`. Exports
+produced before 2026-09-13 21:51Z verify only under `permit-signing-v1`
+(`docs/permit-signing-keys.json`); how to label that is a pending founder
+decision recorded in `atlasent-internal`.
 
 ## Schema validation
 
