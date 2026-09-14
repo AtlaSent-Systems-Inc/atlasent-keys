@@ -65,13 +65,13 @@ no key material: it creates the required second-human review checkpoint. After
 this PR receives one approving review and merges, the publish workflow may sign
 and publish the exact reviewed trust root.
 
-`ak_2026_q3_atlasent_audit` `ak_2026_q3_atlasent_audit` (`role: R3_audit`, `tenant:
+`ak_2026_q3_atlasent_audit` (`role: R3_audit`, `tenant:
 "atlasent"`, `revoked: false`) is the public half of the runtime export
 signing key set on `kttccumlnmdtupgbyfue` on 2026-09-13 (`EXPORT_KID` =
 `ATLASENT_EXPORT_SIGNING_KEY_ID` = `ak_2026_q3_atlasent_audit`; SPKI
 fingerprint `1903850d6a201501`, which is also the `kid` `v1-signing-key`
-derives and advertises). Publication gate satisfied by an equivalent live
-check: a founder-run `atlasent-api` `scripts/export-kid-preflight.sh
+derives and advertises). The cryptographic pre-publication check was satisfied by a live
+verification: a founder-run `atlasent-api` `scripts/export-kid-preflight.sh
 --require-accepted` on 2026-09-14 verified a fresh production export's
 outer signature against this exact material (`atlasent-audit-verify`
 v0.1.0, ACCEPTED, `key_id=ak_2026_q3_atlasent_audit`). It signs the
