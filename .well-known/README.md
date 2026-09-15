@@ -55,15 +55,14 @@ production export to date carries an empty `key_id` — so that step
 remains open, but it is no longer represented by placeholder material
 here.
 
-**Updated 2026-09-14 — the export-envelope R3 key material is configured,
-but signed publication is pending independent ratification.** PR #33 placed
+**Published 2026-09-15 after independent ratification.** PR #33 placed
 the public-key entry on `main`, but `publish-trust-root` run 34801144971
 correctly stopped at the AtlaSent gate because the merged PR had zero approving
-reviews (`Authorization DENIED: missing QA approval`). The workflow therefore
-did not refresh the trust-root index or Sigstore bundles. This follow-up changes
-no key material: it creates the required second-human review checkpoint. After
-this PR receives one approving review and merges, the publish workflow may sign
-and publish the exact reviewed trust root.
+reviews (`Authorization DENIED: missing QA approval`). PR #35 then received
+an approving review from `jf-atlasent` and merged without changing key
+material. The governed publication succeeded, and bot commit
+`01968e9cf13c329d7f1133403efe030b6b08beff` refreshed the trust-root index
+and Sigstore bundles for the exact ratified material.
 
 `ak_2026_q3_atlasent_audit` (`role: R3_audit`, `tenant:
 "atlasent"`, `revoked: false`) is the public half of the runtime export
