@@ -4,7 +4,7 @@
     {
       "kid": "4d8b824fb0e827dc",
       "x": "h0b-yO8AgeLJXt9pF_DMaq9pHdeD0cJFpoNJ0rqIY0Q",
-      "environment": "atlasent-api runtime staging (lwnqpmnxpeyhpxvastku)",
+      "environment": "atlasent-api runtime staging",
       "policy_doc": "docs/STAGING_KEY_TRUST_POLICY.md"
     }
   ]

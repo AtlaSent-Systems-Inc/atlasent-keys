@@ -7,8 +7,8 @@ against it. This is a stated policy, not an oversight.
 
 ## The finding that raised the question
 
-During the 2026-08-16 staging deploy recovery, runtime staging
-(`lwnqpmnxpeyhpxvastku`) was confirmed live to sign exports under:
+During the 2026-08-16 staging deploy recovery, the staging
+runtime was confirmed live to sign exports under:
 
 - `kid`: `4d8b824fb0e827dc`
 - Ed25519 JWK `x`: `h0b-yO8AgeLJXt9pF_DMaq9pHdeD0cJFpoNJ0rqIY0Q`
@@ -52,8 +52,8 @@ answer is no.
 ## What this means in practice
 
 A staging `v1-export-audit` bundle carries `key_id: 4d8b824fb0e827dc` and a
-well-formed embedded `public_key_pem` (as of the 2026-08-13 fix — see
-`atlasent-internal/runbooks/staging-export-signing-config-gap-2026-08-13.md`).
+well-formed embedded `public_key_pem` (as of the 2026-08-13 fix to the staging export-signing
+configuration, recorded in internal records).
 Run the standard offline procedure
 (`atlasent-verify/runbooks/external-audit-verify-proof.md`) against it using
 **only this published trust root** as `--keys`, and the expected, correct

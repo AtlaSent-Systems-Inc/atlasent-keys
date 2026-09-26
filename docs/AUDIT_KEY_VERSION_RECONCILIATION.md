@@ -7,8 +7,8 @@
 > `8c3d2752094d1d0a21097294867d7e51b73a223cf1c70d3872e699859a6187c7`) was
 > obtained from the runtime's own self-tested `{"pubkey":true}` response and
 > **verified 7/7 against production `audit_events` signatures spanning
-> 2026-06-07 → 2026-09-12** (`atlasent-internal`
-> `scripts/verify-audit-key-candidate.sh`; founder-run against the live
+> 2026-06-07 → 2026-09-12** (internal verification script
+> `verify-audit-key-candidate.sh`; founder-run against the live
 > runtime, then independently re-run from the pasted PEM). Both candidate
 > explanations from the 2026-09-12 audit are closed: the seed did not change
 > (June rows verify) and the runtime derives its counterpart correctly (the
@@ -75,9 +75,9 @@ the same symptom ("the advertised key failed to verify the runtime's own
 audit-chain signatures") and now carries a load-time self-test. Derive the
 public half offline from the seed with OpenSSL as well, and publish only if
 both agree *and* verify a current production entry. Method, sampled
-(hash, signature) pairs, and a check script (`scripts/verify-audit-key-candidate.sh`,
-public-key input only) live in `atlasent-internal`
-`compliance/soc2/audits/2026-09-audit-key-publication-verification.md`.
+(hash, signature) pairs, and a check script (`verify-audit-key-candidate.sh`,
+public-key input only) are kept in internal compliance records (the
+2026-09 audit-key publication verification record).
 
 Until a verified key is published, the trust page carries a withdrawal
 notice instead of a key; this JWKS entry stays as-is (not renamed, not yet
