@@ -1,7 +1,7 @@
 # Rename proposal: `atlasent-keys` → `atlasent-trust-root`
 
 **Status:** Draft · **Companion to:**
-[`atlasent/docs/design/TRUST_ROOT_ARCHITECTURE.md`](https://github.com/AtlaSent-Systems-Inc/atlasent/blob/claude/friendly-rubin-bKYOt/docs/design/TRUST_ROOT_ARCHITECTURE.md)
+[`atlasent/docs/design/TRUST_ROOT_ARCHITECTURE.md`](https://github.com/Atlasent/atlasent/blob/main/docs/design/TRUST_ROOT_ARCHITECTURE.md)
 
 This repo's name implies enterprise key management. The repo is a
 five-line nginx static host. The full architecture doc explains the
