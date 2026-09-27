@@ -1,0 +1,23 @@
+# CODEOWNERS — atlasent-keys (public trust root)
+#
+# Without this file GitHub auto-requests no reviewer, so PRs here never
+# appeared in jf-atlasent's "review requested" queue unless someone added
+# him by hand (only #36 and #38 ever were). The PR author is never
+# requested on their own PR, so bettyc925's PRs route to jf-atlasent and
+# vice versa.
+#
+# Individuals, not @Atlasent/eng-leadership: a team only works as a code
+# owner if it has been granted write access to this repo, and both people
+# here are direct admins. Switch to the team once it has repo access.
+#
+# Requests fire when a PR is opened non-draft or marked "Ready for review";
+# a draft does not request code owners.
+
+*                  @bettyc925 @jf-atlasent
+
+# Trust-root material: every AtlaSent signature is verified against these.
+# The publish gate also requires one approving review (require_approvals: 1).
+/.well-known/      @bettyc925 @jf-atlasent
+/cosign.pub        @bettyc925 @jf-atlasent
+/docs/permit-signing-keys.json @bettyc925 @jf-atlasent
+/.github/          @bettyc925 @jf-atlasent
