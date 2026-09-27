@@ -14,7 +14,7 @@
     },
     {
       "path": "/.well-known/atlasent-sigstore-identities.json",
-      "sha256": "e1e5b768bbd9ba350678b0b3a2e0ffede71c6ade2df63765e36d251db97d32ef",
+      "sha256": "f07eb034c035daf7a804a114e0a78003cf9369268a2f3cf7b0183b5bc884e9df",
       "sig": "/.well-known/atlasent-sigstore-identities.json.bundle"
     },
     {
